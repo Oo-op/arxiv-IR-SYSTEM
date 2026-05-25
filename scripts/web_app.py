@@ -204,11 +204,6 @@ PAGE_STYLE = """
     font-size: 28px;
     margin-top: 8px;
   }
-  .footer-note {
-    margin-top: 20px;
-    color: var(--muted);
-    font-size: 14px;
-  }
   a {
     color: var(--accent-dark);
     text-decoration: none;
@@ -302,8 +297,6 @@ def build_page(query: str, top_k: int, results: list[dict], system: IRSystem) ->
     <section class="results">
       {''.join(result_cards)}
     </section>
-
-    <p class="footer-note">提示：当前页面适合课程作业展示。如果继续扩展，可以加入高亮、停用词处理和 Web 图表展示。</p>
   </div>
 </body>
 </html>"""
