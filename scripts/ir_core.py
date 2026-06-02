@@ -28,7 +28,7 @@ class SearchResult:
 
 
 class IRSystem:
-    """A small TF-IDF vector space retrieval system built on inverted index."""
+    """A retrieval system supporting both TF-IDF and BM25 algorithms."""
 
     def __init__(
         self,
@@ -56,8 +56,14 @@ class IRSystem:
             }
             for item in self.vocab_payload["terms"]
         }
+        
+        # TF-IDF related
         self.idf_map = {term: self.compute_idf(stats["df"]) for term, stats in self.term_stats.items()}
         self.doc_norms = self._build_document_norms()
+        
+        # BM25 related
+        self.avg_doc_length = self._compute_avg_doc_length()
+        self.bm25_idf_map = {term: self.compute_bm25_idf(stats["df"]) for term, stats in self.term_stats.items()}
 
     @staticmethod
     def normalize_text(text: str) -> str:
@@ -73,6 +79,23 @@ class IRSystem:
         if document_frequency <= 0:
             return 0.0
         return math.log(self.document_count / document_frequency) + 1.0
+
+    def compute_bm25_idf(self, document_frequency: int) -> float:
+        if document_frequency <= 0:
+            return 0.0
+        return math.log((self.document_count - document_frequency + 0.5) / (document_frequency + 0.5) + 1.0)
+
+    def _compute_avg_doc_length(self) -> float:
+        total_length = sum(doc.get("token_count", 0) for doc in self.documents)
+        return total_length / self.document_count if self.document_count > 0 else 0.0
+
+    def _compute_bm25_term_score(self, term: str, tf: int, doc_length: int, k1: float = 1.2, b: float = 0.75) -> float:
+        idf = self.bm25_idf_map.get(term, 0.0)
+        if idf <= 0:
+            return 0.0
+        numerator = tf * (k1 + 1)
+        denominator = tf + k1 * (1 - b + b * doc_length / self.avg_doc_length)
+        return idf * numerator / denominator
 
     def _build_document_norms(self) -> dict[int, float]:
         doc_squared_sum: dict[int, float] = {}
@@ -167,7 +190,11 @@ class IRSystem:
             )
         return results
 
-    def search_as_dicts(self, query: str, top_k: int = 10) -> list[dict]:
+    def search_as_dicts(self, query: str, top_k: int = 10, method: str = "tfidf") -> list[dict]:
+        if method == "bm25":
+            results = self.bm25_search(query, top_k=top_k)
+        else:
+            results = self.search(query, top_k=top_k)
         return [
             {
                 "rank": result.rank,
@@ -179,8 +206,49 @@ class IRSystem:
                 "published": result.published,
                 "matched_terms": result.matched_terms,
             }
-            for result in self.search(query, top_k=top_k)
+            for result in results
         ]
+
+    def bm25_search(self, query: str, top_k: int = 10, k1: float = 1.2, b: float = 0.75) -> list[SearchResult]:
+        tokens = self.tokenize(query)
+        query_terms = {token for token in tokens if token in self.term_stats}
+        if not query_terms:
+            return []
+
+        scores: dict[int, float] = {}
+        matched_terms_by_doc: dict[int, set[str]] = {}
+        
+        for term in query_terms:
+            postings = self.inverted_index.get(term, [])
+            for posting in postings:
+                doc_id = posting["doc_id"]
+                doc = self.doc_map[doc_id]
+                doc_length = doc.get("token_count", 0)
+                tf = posting["tf"]
+                
+                term_score = self._compute_bm25_term_score(term, tf, doc_length, k1, b)
+                scores[doc_id] = scores.get(doc_id, 0.0) + term_score
+                matched_terms_by_doc.setdefault(doc_id, set()).add(term)
+
+        ranked_items = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+
+        results: list[SearchResult] = []
+        for rank, (doc_id, score) in enumerate(ranked_items[:top_k], start=1):
+            doc = self.doc_map[doc_id]
+            matched_terms = sorted(matched_terms_by_doc.get(doc_id, set()))
+            results.append(
+                SearchResult(
+                    rank=rank,
+                    doc_id=doc_id,
+                    score=score,
+                    title=doc["title"],
+                    snippet=self.build_snippet(doc, matched_terms),
+                    url=doc["url"],
+                    published=doc["published"],
+                    matched_terms=matched_terms,
+                )
+            )
+        return results
 
 
 def default_paths(project_root: str | Path) -> tuple[Path, Path, Path]:
