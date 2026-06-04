@@ -6,12 +6,19 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from ir_core import IRSystem, default_paths
 
+TOP_K = 20
+SEARCH_METHODS = {
+    "tfidf": ("TF-IDF", "余弦相似度"),
+    "bm25": ("BM25", "BM25 评分"),
+    "semantic": ("Semantic", "Sentence-BERT 语义相似度"),
+}
 
 PAGE_STYLE = """
 <style>
@@ -80,7 +87,7 @@ PAGE_STYLE = """
   }
   form {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 120px 140px;
+    grid-template-columns: minmax(0, 1fr) 180px 140px;
     gap: 12px;
     align-items: end;
   }
@@ -217,8 +224,16 @@ PAGE_STYLE = """
 """
 
 
-def build_page(query: str, top_k: int, results: list[dict], system: IRSystem) -> str:
+def build_page(
+    query: str,
+    method: str,
+    results: list[dict],
+    system: IRSystem,
+    error_message: str = "",
+) -> str:
     escaped_query = html.escape(query)
+    selected_method = method if method in SEARCH_METHODS else "tfidf"
+    method_name, score_label = SEARCH_METHODS[selected_method]
     result_count = len(results)
     result_cards = []
     for item in results:
@@ -242,7 +257,9 @@ def build_page(query: str, top_k: int, results: list[dict], system: IRSystem) ->
             """
         )
 
-    if not result_cards and query:
+    if error_message:
+        result_cards.append(f'<div class="result-card empty">{html.escape(error_message)}</div>')
+    elif not result_cards and query:
         result_cards.append('<div class="result-card empty">没有找到匹配结果，请尝试更换关键词。</div>')
     elif not query:
         result_cards.append(
@@ -262,7 +279,7 @@ def build_page(query: str, top_k: int, results: list[dict], system: IRSystem) ->
     <section class="hero">
       <p class="eyebrow">Course Project</p>
       <h1>arXiv 论文摘要信息检索系统</h1>
-      <p>基于 120 篇 <code>cs.AI</code> 论文摘要构建倒排索引，使用 TF-IDF 与余弦相似度完成排序检索。该页面直接复用命令行版本的检索核心。</p>
+      <p>基于 120 篇 <code>cs.AI</code> 论文摘要构建倒排索引，支持 TF-IDF、BM25 与语义检索。该页面直接复用命令行版本的检索核心。</p>
     </section>
 
     <section class="meta-grid">
@@ -278,9 +295,9 @@ def build_page(query: str, top_k: int, results: list[dict], system: IRSystem) ->
           <input id="q" name="q" value="{escaped_query}" placeholder="例如：multi-agent reasoning" />
         </div>
         <div>
-          <label for="top_k">Top K</label>
-          <select id="top_k" name="top_k">
-            {build_top_k_options(top_k)}
+          <label for="method">检索方式</label>
+          <select id="method" name="method">
+            {build_method_options(selected_method)}
           </select>
         </div>
         <div>
@@ -289,8 +306,9 @@ def build_page(query: str, top_k: int, results: list[dict], system: IRSystem) ->
       </form>
       <div class="summary">
         <span>查询字段：标题 + 摘要</span>
-        <span>检索模型：TF-IDF</span>
-        <span>排序方式：余弦相似度</span>
+        <span>返回数量：Top {TOP_K}</span>
+        <span>检索模型：{method_name}</span>
+        <span>排序方式：{score_label}</span>
       </div>
     </section>
 
@@ -302,15 +320,35 @@ def build_page(query: str, top_k: int, results: list[dict], system: IRSystem) ->
 </html>"""
 
 
-def build_top_k_options(current_top_k: int) -> str:
+def build_method_options(current_method: str) -> str:
     options = []
-    for value in (5, 10, 15, 20):
-        selected = " selected" if value == current_top_k else ""
-        options.append(f'<option value="{value}"{selected}>{value}</option>')
+    for value, (label, _) in SEARCH_METHODS.items():
+        selected = " selected" if value == current_method else ""
+        options.append(f'<option value="{value}"{selected}>{label}</option>')
     return "".join(options)
 
 
-def make_handler(system: IRSystem):
+def make_handler(system: IRSystem, project_root: Path):
+    semantic_system = None
+
+    def run_search(query: str, method: str) -> tuple[list[dict], str, str]:
+        nonlocal semantic_system
+        selected_method = method if method in SEARCH_METHODS else "tfidf"
+        if not query:
+            return [], selected_method, ""
+        if selected_method in {"tfidf", "bm25"}:
+            return system.search_as_dicts(query, top_k=TOP_K, method=selected_method), selected_method, ""
+        try:
+            if semantic_system is None:
+                from semantic_search import SemanticIRSystem, default_paths as semantic_paths
+
+                documents_path, embedding_path = semantic_paths(project_root)
+                semantic_system = SemanticIRSystem(documents_path, embedding_cache_path=embedding_path)
+            return semantic_system.search_as_dicts(query, top_k=TOP_K), selected_method, ""
+        except Exception as exc:
+            message = f"语义检索暂不可用：{exc}。当前 Python：{sys.executable}"
+            return [], selected_method, message
+
     class RequestHandler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             parsed = urlparse(self.path)
@@ -323,13 +361,9 @@ def make_handler(system: IRSystem):
 
             params = parse_qs(parsed.query)
             query = params.get("q", [""])[0].strip()
-            try:
-                top_k = int(params.get("top_k", ["10"])[0])
-            except ValueError:
-                top_k = 10
-            top_k = min(max(top_k, 1), 20)
-            results = system.search_as_dicts(query, top_k=top_k) if query else []
-            page = build_page(query, top_k, results, system)
+            method = params.get("method", ["tfidf"])[0].strip().lower()
+            results, selected_method, error_message = run_search(query, method)
+            page = build_page(query, selected_method, results, system, error_message=error_message)
             payload = page.encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -340,17 +374,15 @@ def make_handler(system: IRSystem):
         def handle_api(self, parsed) -> None:
             params = parse_qs(parsed.query)
             query = params.get("q", [""])[0].strip()
-            try:
-                top_k = int(params.get("top_k", ["10"])[0])
-            except ValueError:
-                top_k = 10
-            top_k = min(max(top_k, 1), 20)
-            results = system.search_as_dicts(query, top_k=top_k) if query else []
+            method = params.get("method", ["tfidf"])[0].strip().lower()
+            results, selected_method, error_message = run_search(query, method)
             payload = json.dumps(
                 {
                     "query": query,
-                    "top_k": top_k,
+                    "method": selected_method,
+                    "top_k": TOP_K,
                     "result_count": len(results),
+                    "error": error_message,
                     "results": results,
                 },
                 ensure_ascii=False,
@@ -381,7 +413,7 @@ def main() -> int:
     args = parse_args()
     cleaned_documents_path, vocab_path, inverted_index_path = default_paths(args.project_root)
     system = IRSystem(cleaned_documents_path, vocab_path, inverted_index_path)
-    handler = make_handler(system)
+    handler = make_handler(system, Path(args.project_root))
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving on http://{args.host}:{args.port}")
     try:

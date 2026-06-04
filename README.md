@@ -1,186 +1,174 @@
 # arXiv 论文摘要信息检索系统
 
-基于 arXiv 学术论文摘要构建的信息检索系统，支持 TF-IDF、BM25 和语义检索三种算法。
+这是一个面向信息检索课程作业的 arXiv 论文摘要检索系统。项目从 arXiv `cs.AI` 分类抓取论文元数据，对标题和摘要做英文文本预处理，构建词表与倒排索引，并提供 TF-IDF、BM25 和 Sentence-BERT 语义检索三种查询方式。
 
-## 功能特点
+## 功能
 
-- **多种检索算法**：支持 TF-IDF、BM25 和基于 Sentence-BERT 的语义检索
-- **命令行界面**：支持单次查询和交互式查询模式
-- **Web 界面**：提供简洁的浏览器检索界面
-- **人工评价**：支持生成评价模板和计算 Precision@K 指标
-- **高效索引**：倒排索引持久化存储，支持快速查询
+- 抓取 arXiv 指定分类的论文标题、摘要、作者、发布日期和 URL。
+- 对标题和摘要做 HTML 清理、大小写归一化、英文 tokenization。
+- 构建词表、文档频率、词频、位置信息和倒排索引。
+- 支持 TF-IDF 余弦相似度检索和 BM25 排序。
+- 支持基于 `sentence-transformers` 的语义检索，并缓存文档向量。
+- 提供命令行检索、交互式检索、本地 Web 页面和 JSON API。
+- 提供人工评测模板生成与 Precision@5、Precision@10 统计。
 
 ## 项目结构
 
-```
+```text
 arxiv-IR-SYSTEM/
 ├── data/
-│   ├── raw/
-│   │   └── documents.json          # 原始论文数据
-│   ├── processed/
-│   │   └── cleaned_documents.json  # 预处理后的数据
+│   ├── raw/documents.json                 # arXiv 原始论文数据
+│   ├── processed/cleaned_documents.json   # 清洗和分词后的论文数据
 │   └── index/
-│       ├── vocab.json              # 词汇表
-│       ├── inverted_index.json     # 倒排索引
-│       └── semantic_embeddings.npy # 语义嵌入缓存（可选）
-├── scripts/
-│   ├── fetch_arxiv.py              # 数据爬取
-│   ├── preprocess.py               # 文本预处理
-│   ├── build_index.py              # 索引构建
-│   ├── run_pipeline.py             # 完整流程运行
-│   ├── ir_core.py                  # 检索核心模块
-│   ├── semantic_search.py          # 语义检索模块
-│   ├── search_cli.py               # 命令行检索
-│   ├── web_app.py                  # Web 界面
-│   └── evaluate_ir.py              # 人工评价
-├── output/
-│   ├── evaluation_template.csv     # 评价模板
-│   └── evaluation_summary.json     # 评价结果
+│       ├── vocab.json                     # 词表和词频统计
+│       ├── inverted_index.json            # 倒排索引
+│       └── semantic_embeddings.npy        # Sentence-BERT 文档向量缓存
 ├── docs/
-│   └── evaluation_queries.json     # 测试查询词
-└── requirements.txt                # 依赖配置
+│   ├── evaluation_queries.json            # 评测查询词
+│   └── 作业报告.docx                       # 课程作业报告
+├── output/
+│   ├── pipeline_summary.json              # 数据和索引构建摘要
+│   ├── evaluation_template.csv            # 人工标注评测表
+│   └── evaluation_summary.json            # 评测结果
+├── scripts/
+│   ├── fetch_arxiv.py                     # 抓取 arXiv 数据
+│   ├── preprocess.py                      # 文本清洗和分词
+│   ├── build_index.py                     # 构建词表和倒排索引
+│   ├── run_pipeline.py                    # 串联完整数据处理流程
+│   ├── ir_core.py                         # TF-IDF 和 BM25 检索核心
+│   ├── semantic_search.py                 # 语义检索
+│   ├── search_cli.py                      # 命令行检索入口
+│   ├── web_app.py                         # 本地 Web 检索页面和 API
+│   └── evaluate_ir.py                     # 人工评测工具
+├── requirements.txt
+└── README.md
 ```
 
-## 数据说明
+## 当前数据
 
-- **数据源**：arXiv `cs.AI` 分类
-- **文档数量**：120 篇论文摘要
-- **包含字段**：标题、摘要、作者、发布日期、URL 等
+当前仓库已包含一份可直接运行的数据和索引：
 
-## 安装说明
+- 数据来源：arXiv Web Pages
+- 分类：`cs.AI`
+- 文档数：120 篇论文摘要
+- 词项数：5302
+- 平均文档长度：197.24 tokens
+
+当前人工评测结果：
+
+- 查询数：5
+- 平均 Precision@5：0.92
+- 平均 Precision@10：0.9314
+
+## 安装
+
+建议使用 Python 3.10 或更新版本。
 
 ```bash
-# 进入项目目录
-cd arxiv-IR-SYSTEM
-
-# 安装语义检索依赖（如使用语义检索）
-pip install sentence-transformers torch numpy
+pip install -r requirements.txt
 ```
 
-## 使用方式
+如果只运行 TF-IDF 或 BM25 检索，核心依赖主要是 `numpy`；语义检索需要额外下载 Sentence-BERT 模型，首次运行会较慢。
 
-### 1. 命令行检索
+## 使用方法
+
+### 命令行检索
 
 ```bash
-# TF-IDF 检索（默认）
-python scripts/search_cli.py --query "machine learning" --top-k 5
+# TF-IDF 检索，默认方法
+python scripts/search_cli.py --query "multi-agent reasoning" --top-k 5
 
 # BM25 检索
-python scripts/search_cli.py --query "machine learning" --method bm25 --top-k 5
+python scripts/search_cli.py --query "multi-agent reasoning" --method bm25 --top-k 5
 
 # 语义检索
-python scripts/search_cli.py --query "machine learning" --method semantic --top-k 5
+python scripts/search_cli.py --query "multi-agent reasoning" --method semantic --top-k 5
 
-# 交互式模式
-python scripts/search_cli.py --interactive --method bm25
+# 输出 JSON
+python scripts/search_cli.py --query "retrieval augmented generation" --method bm25 --json
+
+# 交互式检索
+python scripts/search_cli.py --interactive --method tfidf
 ```
 
-### 2. Web 界面
+### Web 页面
 
 ```bash
-# 启动 Web 服务
 python scripts/web_app.py --host 127.0.0.1 --port 8000
-
-# 访问地址
-# 浏览器打开: http://127.0.0.1:8000
 ```
 
-**注意**：Web 界面默认使用 **TF-IDF** 检索算法。如需使用其他算法，请参考下方"高级配置"部分。
+浏览器打开：
 
-### 3. API 接口
-
-```bash
-# 调用 API
-curl "http://127.0.0.1:8000/api/search?q=machine%20learning&top_k=5"
+```text
+http://127.0.0.1:8000
 ```
 
-### 4. 重新生成索引（可选）
+Web 页面支持在页面中选择 `TF-IDF`、`BM25` 或 `Semantic`。其中语义检索会在首次使用时加载 Sentence-BERT 模型；如果模型或依赖不可用，页面会返回错误提示。
+
+### JSON API
 
 ```bash
-# 完整流程：爬取 -> 预处理 -> 构建索引
+curl "http://127.0.0.1:8000/api/search?q=multi-agent%20reasoning&method=bm25"
+```
+
+支持参数：
+
+- `q`：查询文本。
+- `method`：`tfidf`、`bm25` 或 `semantic`，默认 `tfidf`。
+
+Web API 固定返回最多 20 条结果。
+
+## 重新生成数据和索引
+
+运行完整流程：
+
+```bash
 python scripts/run_pipeline.py --category cs.AI --max-results 120
 ```
 
-## 检索算法
+该命令会依次执行：
 
-| 算法 | 描述 | 特点 |
-|------|------|------|
-| **TF-IDF** | 向量空间模型 + 余弦相似度 | 经典词袋模型，简单高效 |
-| **BM25** | 概率检索模型 | 考虑文档长度归一化，效果更优 |
-| **Semantic** | Sentence-BERT 语义嵌入 | 基于语义理解，支持自然语言查询 |
+1. `scripts/fetch_arxiv.py`：抓取原始论文数据到 `data/raw/documents.json`。
+2. `scripts/preprocess.py`：生成 `data/processed/cleaned_documents.json`。
+3. `scripts/build_index.py`：生成 `data/index/vocab.json`、`data/index/inverted_index.json` 和 `output/pipeline_summary.json`。
 
-## 人工评价
+也可以单独运行每一步：
 
 ```bash
-# 生成评价模板
-python scripts/evaluate_ir.py --mode generate --top-k 10
+python scripts/fetch_arxiv.py --category cs.AI --max-results 120
+python scripts/preprocess.py
+python scripts/build_index.py
+```
 
-# 计算评价指标（先手动标注 evaluation_template.csv）
+## 评测
+
+生成待人工标注的评测表：
+
+```bash
+python scripts/evaluate_ir.py --mode generate --top-k 10
+```
+
+脚本会读取 `docs/evaluation_queries.json` 中的查询词，并把结果写入 `output/evaluation_template.csv`。人工在 `relevant` 列标注 `1` 表示相关，其它值或空值表示不相关。
+
+计算评测指标：
+
+```bash
 python scripts/evaluate_ir.py --mode score
 ```
 
-## 示例输出
+结果写入 `output/evaluation_summary.json`，包含每个查询的 Precision@5、Precision@10 和平均值。
 
-```
-Query: machine learning
-Method: BM25
-Results: 5
---------------------------------------------------------------------------------
-Rank: 1
-Score: 6.455302
-Title: Moral Semantics Survive Machine Translation
-Snippet: Recent advances in machine learning have demonstrated...
-URL: https://arxiv.org/abs/2605.22660
-Published: 21 May 2026
-Matched Terms: machine, learning, translation
---------------------------------------------------------------------------------
-```
+## 检索方法说明
 
-## 配置说明
-
-- **端口配置**：Web 服务默认端口 8000，可通过 `--port` 参数修改
-- **检索数量**：默认返回 10 条结果，可通过 `--top-k` 参数修改
-- **算法选择**：通过 `--method` 参数选择检索算法（tfidf/bm25/semantic）
-
-## 高级配置
-
-### 在 Web 界面中使用其他算法
-
-Web 界面默认使用 TF-IDF 算法。如需在前端使用 BM25 算法，需要修改 `web_app.py` 文件：
-
-1. **修改检索调用**（第 331 行附近）：
-   ```python
-   # 将
-   results = system.search_as_dicts(query, top_k=top_k) if query else []
-   # 修改为
-   results = system.search_as_dicts(query, top_k=top_k, method="bm25") if query else []
-   ```
-
-2. **修改页面显示**（第 292-293 行附近）：
-   ```html
-   <!-- 将
-   <span>检索模型：TF-IDF</span>
-   <span>排序方式：余弦相似度</span>
-   修改为
-   <span>检索模型：BM25</span>
-   <span>排序方式：BM25 评分</span> -->
-   ```
-
-3. **重新启动 Web 服务**：
-   ```bash
-   python scripts/web_app.py
-   ```
-
-**注意**：
-- 语义检索由于需要加载 Sentence-BERT 模型（约 150MB），首次加载较慢，不建议集成到 Web 前端
-- 如需使用语义检索，推荐通过命令行方式运行
+| 方法 | 实现位置 | 说明 |
+| --- | --- | --- |
+| TF-IDF | `scripts/ir_core.py` | 对查询和文档构建 TF-IDF 权重，用余弦相似度排序。 |
+| BM25 | `scripts/ir_core.py` | 使用 `k1=1.2`、`b=0.75`，结合文档长度归一化计算得分。 |
+| Semantic | `scripts/semantic_search.py` | 使用 `all-MiniLM-L6-v2` 编码标题和摘要，通过余弦相似度排序。 |
 
 ## 注意事项
 
-1. 语义检索首次运行需要下载预训练模型（约 150MB）
-2. 建议在网络稳定的环境下运行语义检索
-3. 数据文件已预先生成，直接运行检索即可，无需重新爬取
-
-## 许可证
-
-本项目仅供学习和研究使用，数据来源于 arXiv 开放获取平台。
+- `fetch_arxiv.py` 使用 `curl` 抓取网页，重新抓取数据时需要网络可用。
+- 语义检索首次运行会下载模型，并把文档向量缓存到 `data/index/semantic_embeddings.npy`。
+- 当前项目数据已经预先生成；只做检索演示时不需要重新抓取或重建索引。
+- `.idea/` 等 IDE 本地配置不属于项目交付内容，不应提交。
