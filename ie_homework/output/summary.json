@@ -1,0 +1,430 @@
+{
+  "document_count": 120,
+  "average_confidence": 0.564,
+  "coverage": {
+    "research_tasks": 72,
+    "methods": 89,
+    "datasets": 6,
+    "metrics": 31,
+    "tfidf_keyphrases": 120,
+    "application_domains": 46,
+    "sustainability_points": 81,
+    "system_names": 98
+  },
+  "top_values": {
+    "arxiv_id": [
+      [
+        "2605.22794",
+        1
+      ],
+      [
+        "2605.22791",
+        1
+      ],
+      [
+        "2605.22786",
+        1
+      ],
+      [
+        "2605.22773",
+        1
+      ],
+      [
+        "2605.22763",
+        1
+      ],
+      [
+        "2605.22759",
+        1
+      ],
+      [
+        "2605.22733",
+        1
+      ],
+      [
+        "2605.22732",
+        1
+      ],
+      [
+        "2605.22720",
+        1
+      ],
+      [
+        "2605.22716",
+        1
+      ]
+    ],
+    "publication_year": [
+      [
+        "2026",
+        120
+      ]
+    ],
+    "authors": [
+      [
+        "John Lygeros",
+        2
+      ],
+      [
+        "Alisa Rupenyan",
+        2
+      ],
+      [
+        "Pushmeet Kohli",
+        2
+      ],
+      [
+        "Benjamin Herd",
+        2
+      ],
+      [
+        "Jessica Kelly",
+        2
+      ],
+      [
+        "Haiyang Shen",
+        2
+      ],
+      [
+        "Mugeng Liu",
+        2
+      ],
+      [
+        "Yudong Han",
+        2
+      ],
+      [
+        "Zhuofan Shi",
+        2
+      ],
+      [
+        "Sixiong Xie",
+        2
+      ]
+    ],
+    "author_count": [
+      [
+        "3",
+        20
+      ],
+      [
+        "4",
+        16
+      ],
+      [
+        "1",
+        14
+      ],
+      [
+        "7",
+        11
+      ],
+      [
+        "2",
+        11
+      ],
+      [
+        "6",
+        11
+      ],
+      [
+        "8",
+        9
+      ],
+      [
+        "5",
+        8
+      ],
+      [
+        "11",
+        5
+      ],
+      [
+        "10",
+        4
+      ]
+    ],
+    "categories": [
+      [
+        "cs.AI",
+        120
+      ]
+    ],
+    "research_tasks": [
+      [
+        "reasoning",
+        26
+      ],
+      [
+        "retrieval",
+        20
+      ],
+      [
+        "reinforcement learning",
+        14
+      ],
+      [
+        "alignment",
+        13
+      ],
+      [
+        "planning",
+        12
+      ],
+      [
+        "autonomous agents",
+        11
+      ],
+      [
+        "knowledge graphs",
+        5
+      ],
+      [
+        "robotics",
+        2
+      ],
+      [
+        "machine translation",
+        2
+      ],
+      [
+        "code generation",
+        1
+      ]
+    ],
+    "methods": [
+      [
+        "large language models",
+        62
+      ],
+      [
+        "benchmarking",
+        26
+      ],
+      [
+        "transformers",
+        12
+      ],
+      [
+        "prompting",
+        9
+      ],
+      [
+        "fine-tuning",
+        9
+      ],
+      [
+        "self-improvement",
+        2
+      ],
+      [
+        "Bayesian methods",
+        2
+      ],
+      [
+        "graph neural networks",
+        2
+      ],
+      [
+        "retrieval augmented generation",
+        1
+      ]
+    ],
+    "datasets": [
+      [
+        "GAIA",
+        2
+      ],
+      [
+        "GSM8K",
+        2
+      ],
+      [
+        "MBPP",
+        1
+      ],
+      [
+        "MMLU",
+        1
+      ],
+      [
+        "TruthfulQA",
+        1
+      ],
+      [
+        "ARC",
+        1
+      ]
+    ],
+    "metrics": [
+      [
+        "accuracy",
+        17
+      ],
+      [
+        "F1",
+        6
+      ],
+      [
+        "pass@k",
+        4
+      ],
+      [
+        "AUC",
+        3
+      ],
+      [
+        "precision",
+        2
+      ],
+      [
+        "success rate",
+        2
+      ],
+      [
+        "recall",
+        2
+      ]
+    ],
+    "tfidf_keyphrases": [
+      [
+        "the",
+        28
+      ],
+      [
+        "and",
+        18
+      ],
+      [
+        "data",
+        5
+      ],
+      [
+        "knowledge",
+        5
+      ],
+      [
+        "agents",
+        5
+      ],
+      [
+        "reasoning",
+        5
+      ],
+      [
+        "communication",
+        4
+      ],
+      [
+        "scientific",
+        4
+      ],
+      [
+        "planning",
+        4
+      ],
+      [
+        "wearable",
+        3
+      ]
+    ],
+    "application_domains": [
+      [
+        "software",
+        21
+      ],
+      [
+        "science",
+        11
+      ],
+      [
+        "healthcare",
+        8
+      ],
+      [
+        "finance",
+        4
+      ],
+      [
+        "robotics",
+        3
+      ],
+      [
+        "education",
+        2
+      ],
+      [
+        "legal",
+        1
+      ],
+      [
+        "social media",
+        1
+      ]
+    ],
+    "sustainability_points": [
+      [
+        "computing efficiency",
+        39
+      ],
+      [
+        "human/social impact",
+        32
+      ],
+      [
+        "safety/robustness",
+        23
+      ],
+      [
+        "fairness/bias",
+        7
+      ],
+      [
+        "privacy/security",
+        6
+      ]
+    ],
+    "system_names": [
+      [
+        "LLM",
+        31
+      ],
+      [
+        "LLM-",
+        11
+      ],
+      [
+        "AI-",
+        6
+      ],
+      [
+        "GRPO",
+        5
+      ],
+      [
+        "XAI",
+        3
+      ],
+      [
+        "CLI",
+        2
+      ],
+      [
+        "KV-",
+        2
+      ],
+      [
+        "JSON-",
+        2
+      ],
+      [
+        "DPO",
+        2
+      ],
+      [
+        "ST-",
+        2
+      ]
+    ]
+  }
+}

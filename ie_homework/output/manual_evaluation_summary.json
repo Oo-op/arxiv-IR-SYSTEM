@@ -1,0 +1,42 @@
+{
+  "labeled_items": 137,
+  "correct_items": 111,
+  "accuracy": 0.8102,
+  "by_field": {
+    "research_tasks": {
+      "labeled": 19,
+      "correct": 13,
+      "accuracy": 0.6842
+    },
+    "methods": {
+      "labeled": 22,
+      "correct": 20,
+      "accuracy": 0.9091
+    },
+    "tfidf_keyphrases": {
+      "labeled": 30,
+      "correct": 29,
+      "accuracy": 0.9667
+    },
+    "application_domains": {
+      "labeled": 16,
+      "correct": 11,
+      "accuracy": 0.6875
+    },
+    "sustainability_points": {
+      "labeled": 21,
+      "correct": 16,
+      "accuracy": 0.7619
+    },
+    "system_names": {
+      "labeled": 26,
+      "correct": 20,
+      "accuracy": 0.7692
+    },
+    "metrics": {
+      "labeled": 3,
+      "correct": 2,
+      "accuracy": 0.6667
+    }
+  }
+}

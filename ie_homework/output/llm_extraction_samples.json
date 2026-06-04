@@ -1,0 +1,43 @@
+[
+  {
+    "doc_id": 1,
+    "title": "MOSS: Self-Evolution through Source-Level Rewriting in Autonomous Agent Systems",
+    "llm_extracted": {
+      "research_problem": "Autonomous agentic systems are static after deployment and cannot fix structural failures that exist in code rather than text-mutable artifacts.",
+      "method": [
+        "MOSS",
+        "source-level self-rewriting",
+        "deterministic multi-stage pipeline",
+        "pluggable external coding-agent CLI",
+        "ephemeral trial workers",
+        "user-consent-gated in-place container swap",
+        "health-probe-gated rollback"
+      ],
+      "datasets": [
+        "OpenClaw"
+      ],
+      "metrics": [
+        "four-task mean grader score"
+      ],
+      "main_contribution": "MOSS enables source-level self-rewriting for autonomous agent systems, allowing them to fix structural failures unreachable through text-layer modifications.",
+      "key_findings": [
+        "MOSS lifts four-task mean grader score from 0.25 to 0.61 in a single cycle without human intervention",
+        "Source-level adaptation is Turing-complete and a strict superset of every text-mutable scope",
+        "Source-level adaptation takes effect deterministically rather than through base-model compliance and does not erode under long-context drift"
+      ],
+      "sustainability_or_social_impact": [
+        "user-consent-gated deployment respects user autonomy",
+        "health-probe-gated rollback provides safety mechanism",
+        "reduces need for human intervention in production failure fixes"
+      ],
+      "evidence_sentences": [
+        "Autonomous agentic systems are largely static after deployment: they do not learn from user interactions, and recurring failures persist until the next human-driven update ships a fix.",
+        "We present MOSS, a system that performs self-rewriting at the source level on production agentic substrates.",
+        "On OpenClaw, MOSS lifts a four-task mean grader score from 0.25 to 0.61 in a single cycle without human intervention."
+      ],
+      "confidence": 0.95,
+      "model": "glm-5",
+      "client": "stdlib-http"
+    }
+  }
+]
